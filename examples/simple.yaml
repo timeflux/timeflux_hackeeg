@@ -1,0 +1,17 @@
+graphs:
+
+  - id: HackEEG
+    nodes:
+    - id: acquire
+      module: timeflux_hackeeg.nodes.driver
+      class: HackEEG
+      params:
+        port: /dev/cu.usbmodem14601
+        rate: 250
+    - id: display
+      module: timeflux.nodes.debug
+      class: Display
+    edges:
+    - source: acquire
+      target: display
+    rate: 10

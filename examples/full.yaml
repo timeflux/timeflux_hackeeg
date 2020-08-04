@@ -1,0 +1,69 @@
+graphs:
+
+  - id: HackEEG
+    nodes:
+    - id: acquire
+      module: timeflux_hackeeg.nodes.driver
+      class: HackEEG
+      params:
+        port: /dev/cu.usbmodem14601
+        rate: 16384
+    - id: publish
+      module: timeflux.nodes.zmq
+      class: Pub
+      params:
+        topic: eeg
+    edges:
+    - source: acquire
+      target: publish
+    rate: 10
+
+  - id: Monitoring
+    nodes:
+    - id: subscribe
+      module: timeflux.nodes.zmq
+      class: Sub
+      params:
+        topics: [ eeg ]
+    - id: decimate
+      module: timeflux_dsp.nodes.filters
+      class: DropRows
+      params:
+        factor: 32 # Downsample to 512 Hz
+    - id: bandpass
+      module: timeflux_dsp.nodes.filters
+      class: IIRFilter
+      params:
+        rate: 250
+        order: 3
+        frequencies: [1, 40]
+    - id: ui
+      module: timeflux_ui.nodes.ui
+      class: UI
+    edges:
+      - source: subscribe:eeg
+        target: ui:eeg
+    rate: 10
+
+  - id: Recorder
+    nodes:
+    - id: subscribe
+      module: timeflux.nodes.zmq
+      class: Sub
+      params:
+        topics: [ eeg ]
+    - id: save
+      module: timeflux.nodes.hdf5
+      class: Save
+      params:
+        path: . # The HDF5 file will be saved in the current directory
+    edges:
+      - source: subscribe:eeg
+        target: save:eeg
+    rate: 1
+
+  - id: Broker
+    nodes:
+    - id: broker
+      module: timeflux.nodes.zmq
+      class: Broker
