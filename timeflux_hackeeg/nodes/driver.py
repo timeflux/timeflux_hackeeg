@@ -84,14 +84,12 @@ class HackEEG(Node):
         self._thread = Thread(target=self._loop).start()
 
     def _reset(self):
-        """Empty cache.
-        """
+        """Empty cache."""
         self._rows = []
         self._timestamps = []
 
     def _loop(self):
-        """Acquire and cache data.
-        """
+        """Acquire and cache data."""
         while self._running:
             try:
                 row = self._read()
@@ -121,38 +119,29 @@ class HackEEG(Node):
                 self._missed = 0
 
     def _read(self):
-        """Read a line of data from the device.
-        """
+        """Read a line of data from the device."""
         row = False
         result = self._hackeeg.read_rdatac_response()
         if result:
-            status_code = result.get(self._hackeeg.MpStatusCodeKey)
-            data = result.get(self._hackeeg.MpDataKey)
-            if status_code == Status.Ok and data:
-                decoded_data = result.get(self._hackeeg.DecodedDataKey)
-                if decoded_data:
-                    values = []
-                    channel_data = decoded_data.get("channel_data")
-                    for channel_number, sample in enumerate(channel_data):
-                        values.append(sample)
-                    row = (
-                        decoded_data.get("sample_number"),
-                        decoded_data.get("timestamp"),
-                        values,
-                    )
+            code = result.get("C")
+            data = result.get("channel_data")
+            if code == Status.Ok and data:
+                row = (
+                    result.get("sample_number"),
+                    result.get("timestamp"),
+                    data,
+                )
         return row
 
     def update(self):
-        """Update the node output.
-        """
+        """Update the node output."""
         with self._lock:
             if self._rows:
                 self.o.set(self._rows, self._timestamps, meta=self.meta)
                 self._reset()
 
     def terminate(self):
-        """Cleanup.
-        """
+        """Cleanup."""
         self._running = False
         while self._thread and self._thread.is_alive():
             sleep(0.001)
