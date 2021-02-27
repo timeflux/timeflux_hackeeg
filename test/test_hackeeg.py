@@ -5,7 +5,7 @@ from timeflux_hackeeg.nodes.driver import HackEEG
 def test_invalid_rate():
     with pytest.raises(ValueError) as e:
         HackEEG(port=None, rate=1)
-    assert str(e.value) == "`1` is not a valid rate; valid rates are: [250, 500, 1024, 2048, 4096, 8192, 16384]"
+    assert str(e.value) == "`1` is not a valid rate; valid rates are: [250, 500, 1000, 2000, 4000, 8000, 16000]"
 
 def test_invalid_gain():
     with pytest.raises(ValueError) as e:
