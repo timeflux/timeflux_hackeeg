@@ -35,7 +35,7 @@ class HackEEG(Node):
 
     """
 
-    def __init__(self, port, rate=250, gain=24, channels=8, debug=False):
+    def __init__(self, port, rate=250, gain=24, channels=8, names=None, debug=False):
 
         # Validate input
         if rate not in SPEEDS.keys():
@@ -46,6 +46,12 @@ class HackEEG(Node):
             raise ValueError(
                 f"`{gain}` is not a valid gain; valid gains are: {sorted(GAINS.keys())}"
             )
+
+        # Set channel names
+        if isinstance(names, list) and len(names) == channels:
+            self.names = names
+        else:
+            self.names = list(range(1, channels + 1))
 
         # Setup board
         self._hackeeg = hackeeg.HackEEGBoard(port, baudrate=2000000, debug=debug)
@@ -137,7 +143,7 @@ class HackEEG(Node):
         """Update the node output."""
         with self._lock:
             if self._rows:
-                self.o.set(self._rows, self._timestamps, meta=self.meta)
+                self.o.set(self._rows, self._timestamps, self.names, meta=self.meta)
                 self._reset()
 
     def terminate(self):
