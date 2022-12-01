@@ -72,9 +72,8 @@ class HackEEG(Node):
         self._hackeeg.rdatac()
 
         # Compute time offset
-        now = time() * 1e6
+        self._start = 2**32
         row = self._read()
-        self._offset = now - row[1]
 
         # Remember sample count
         self._count = row[0]
@@ -137,6 +136,11 @@ class HackEEG(Node):
                     result.get("timestamp"),
                     data,
                 )
+                # The timestamp is a 32-byte unsigned integer, with microseconds units.
+                # It will overflow after about 71 minutes, so we need to reset the offset.
+                if row[1] <= self._start:
+                    self._start = row[1]
+                    self._offset = time() * 1e6 - self._start
         return row
 
     def update(self):
